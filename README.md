@@ -4,22 +4,7 @@ This repository provides a comprehensive architectural blueprint for small to mi
 By leveraging mature open-source technologies under permissive commercial licenses (such as Apache-2.0 and MIT), businesses can host their own foundational models, document search systems, and automated agent pipelines either locally or via highly economical, on-demand compute infrastructure.
 ------------------------------
 ## 🏗️ Architectural Overview
-[ Layer 1: User Interface ]
-└── Open WebUI / Enterprise Chat Interface
-                     ↓
-[ Layer 2: Application & Agent Orchestration ]
-└── LangChain / LlamaIndex / CrewAI Pipeline
-                     ↓
-[ Layer 3: Data Retrieval & Vector Database ]
-└── PostgreSQL + pgvector / Qdrant Storage
-                     ↓
-[ Layer 4: LLM Inference Serving & Gateway ]
-└── Ollama / vLLM / LiteLLM Routing Hub
-                     ↓
-[ Layer 5: Infrastructure & Distributed Compute ]
-└── Local GPU Hardware / Kubernetes / Ray Cluster
-
-
+The stack is designed with a layered approach, ensuring a clean separation of concerns between raw compute orchestration, model serving, internal data vectorization, and user-facing applications. Execution LayerLayer NameAssociated TechnologiesArchitectural Data Flow RoleLevel 1User Interface (UI)Open WebUI / Enterprise ChatCaptures incoming user prompts, manages session history, and displays real-time streaming tokens.Level 2Application & OrchestrationLangChain / LlamaIndex / CrewAIIntercepts queries, manages multi-agent states, and handles system prompt compilation.Level 3Data & Vector StoragePostgreSQL + pgvector / QdrantHosts the corporate knowledge base, storing and indexing semantic text embeddings.Level 4Inference & GatewayLiteLLM / Ollama / vLLMUnifies backend endpoints, handles API routing rules, and runs the core LLM execution engine.Level 5Compute InfrastructureLocal Hardware / Kubernetes / RayOrchestrates the physical hardware nodes, VRAM pools, and baseline container runtimes.
 ------------------------------
 ## 📊 Core Tech Stack Components
 
