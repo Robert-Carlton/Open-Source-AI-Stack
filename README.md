@@ -63,43 +63,6 @@ flowchart LR
     Airflow -. training jobs .-> Train
 ```
 
-## 🌐 Hosting the diagram live with GitHub Pages
-
-The interactive diagram (`docs/architecture-diagram.html`) is a self-contained static page, so GitHub can host it for free with **GitHub Pages** — no build step, no separate hosting account.
-
-**1. Push this repo to GitHub** (skip if you've already done this):
-
-```bash
-cd repo   # the folder from the zip, containing README.md and docs/
-git init
-git add .
-git commit -m "Add open source AI stack architecture guide"
-git branch -M main
-git remote add origin https://github.com/<your-username>/<your-repo>.git
-git push -u origin main
-```
-
-**2. Turn on Pages, pointed at the `docs/` folder:**
-
-- On GitHub, go to your repo → **Settings** → **Pages** (left sidebar, under "Code and automation").
-- Under **Build and deployment → Source**, choose **Deploy from a branch**.
-- Under **Branch**, select `main` and folder `/docs`, then **Save**.
-- Wait about a minute, then reload that Pages settings page — GitHub will show your live URL: `https://<your-username>.github.io/<your-repo>/`.
-
-That's it — no GitHub Actions workflow needed for this simple case. Any time you push a change to `docs/`, the live site updates automatically within a minute or two.
-
-**3. Where things land:**
-
-- `https://<your-username>.github.io/<your-repo>/` → `docs/index.html`, a small landing page linking to the diagram.
-- `https://<your-username>.github.io/<your-repo>/architecture-diagram.html` → the diagram directly — this is the link to share if you just want to send someone the diagram.
-
-**A couple of things to know:**
-
-- On a free personal GitHub account, Pages sites are **public even if the repository is private** unless you're on a paid plan (GitHub Pro/Team/Enterprise, which support private Pages sites). If this repo is public already, that's moot — the content here isn't sensitive, just make sure that's still true for anything you add later.
-- The `.nojekyll` file in `docs/` tells GitHub Pages to serve the files as-is instead of running them through Jekyll (GitHub's default static-site generator) — keep it there, it prevents GitHub from trying to "process" the raw HTML/CSS.
-- Once your Pages site is live, come back and replace the placeholder link below with your real one.
-
-**Live diagram:** _(add your link here once Pages is enabled)_ → `https://<your-username>.github.io/<your-repo>/architecture-diagram.html`
 
 ## Two example use cases covered in the guide
 
