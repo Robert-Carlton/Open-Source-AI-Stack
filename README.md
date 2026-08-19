@@ -6,30 +6,18 @@ By leveraging mature open-source technologies under permissive commercial licens
 ## 🏗️ Architectural Overview
 The stack is designed with a layered approach, ensuring a clean separation of concerns between raw compute orchestration, model serving, internal data vectorization, and user-facing applications.
 
-┌────────────────────────────────────────────────────────┐
-│               UI & User Interface Layer                │
-│             (Open WebUI / Enterprise Chat)             │
-└───────────────────────────┬────────────────────────────┘
-                            ▼
-┌────────────────────────────────────────────────────────┐
-│         Application & Agent Orchestration Layer        │
-│          (LangChain / LlamaIndex / CrewAI)             │
-└───────────────────────────┬────────────────────────────┘
-                            ▼
-┌────────────────────────────────────────────────────────┐
-│           Data Retrieval & Vector DB Layer             │
-│            (PostgreSQL + pgvector / Qdrant)            │
-└───────────────────────────┬────────────────────────────┘
-                            ▼
-┌────────────────────────────────────────────────────────┐
-│         LLM Inference serving & Gateway Layer          │
-│               (Ollama / vLLM / LiteLLM)                │
-└───────────────────────────┬────────────────────────────┘
-                            ▼
-┌────────────────────────────────────────────────────────┐
-│         Infrastructure & Distributed Compute           │
-│           (PyTorch / Kubernetes / Ray / Local)          │
-└───────────────────────────┬────────────────────────────┘
+graph TD
+    A[1. User Interface Layer<br>Open WebUI] --> B[2. Orchestration Layer<br>LangChain / LlamaIndex / CrewAI]
+    B --> C[3. Data & Vector DB Layer<br>PostgreSQL + pgvector / Qdrant]
+    C --> D[4. Inference & Gateway Layer<br>LiteLLM / Ollama / vLLM]
+    D --> E[5. Infrastructure & Compute Layer<br>Local GPU / Kubernetes / Ray]
+
+    style A fill:#f9f,stroke:#333,stroke-width:1px
+    style B fill:#bbf,stroke:#333,stroke-width:1px
+    style C fill:#fbf,stroke:#333,stroke-width:1px
+    style D fill:#fbb,stroke:#333,stroke-width:1px
+    style E fill:#fff,stroke:#333,stroke-width:1px
+
 
 ------------------------------
 ## 📊 Core Tech Stack Components
