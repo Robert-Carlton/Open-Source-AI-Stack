@@ -160,19 +160,14 @@ For **RAG** beyond what Open WebUI's built-in retrieval offers — more control 
 
 For **agentic workflows** (multi-step reasoning, tool use, task automation) — **LangGraph** (part of the LangChain ecosystem) for code-first agent graphs, or **n8n** (fair-code/Sustainable Use License — note: not OSI-approved for all uses, verify against the org's license requirements) or **Flowise** (Apache 2.0) for low-code workflow building that lets non-engineers wire up AI-assisted business processes (e.g., "summarize this inbound email, classify its intent, draft a reply, route for approval").
 
-For **classification and prediction** (the "other algorithms" beyond LLMs — churn prediction, lead scoring, fraud/anomaly detection, demand forecasting): this is classical ML, not LLM territory, and it's the highest-ROI, lowest-compute part of the stack for most SMBs. **scikit-learn** and **XGBoost/LightGBM** for models, **MLflow** (Apache 2.0) for experiment tracking and a model registry, and **Airflow** or **Dagster** (Apache 2.0) to schedule the retraining/scoring pipelines. Package trained models behind a simple **FastAPI** service (or MLflow's own model-serving) so the rest of the stack can call them over HTTP just like any other internal API. This is a fully supported, self-contained workflow — a developer building something like a churn classifier never has to leave this stack. See §5, Example B for the concrete build/deploy/serve walkthrough, including exposing a scoring endpoint other internal systems can push data to.
+For **classification and prediction** (the "other algorithms" beyond LLMs — churn prediction, lead scoring, fraud/anomaly detection, demand forecasting): this is classical ML, not LLM territory, and it's the highest-ROI, lowest-compute part of the stack for most SMBs. **scikit-learn** and **XGBoost/LightGBM** for models, **MLflow** (Apache 2.0) for experiment tracking and a model registry, and **Airflow** or **Dagster** (Apache 2.0) to schedule the retraining/scoring pipelines. Package trained models behind a simple **FastAPI** service (or MLflow's own model-serving) so the rest of the stack can call them over HTTP just like any other internal API.
 
-### 4.10 Observability, guardrails & model performance monitoring
+### 4.10 Observability & guardrails
 
-This layer answers two distinct questions the org will ask constantly: "is the system healthy," and "are the models actually still good." Both are covered:
-
-**LLM usage & performance.** **LiteLLM** (from the model-serving layer) logs every request per user/team/app — token counts, cost estimate, latency, error rate — and can enforce per-user/per-team rate limits or budgets out of the box. **Langfuse** (MIT core) sits alongside it for deeper tracing — every prompt/completion, full retrieval context for RAG calls, latency and token usage broken down per user/app/model, and side-by-side comparison when you swap models (e.g., "did the new model answer these test questions better than the old one"). Together these are the "which model is being used, how much, how fast, how well" logging layer for LLMs specifically.
-
-**Classical ML model performance.** A separate concern, covered by **MLflow** (training-time: every run's hyperparameters and metrics — accuracy/precision/recall/AUC — plus full version history of what was deployed when) and **Evidently AI** (Apache 2.0) for *production* monitoring — it compares live prediction data against training data to catch data drift and performance decay (e.g., "the churn model's precision has quietly dropped over the last month because customer behavior shifted"), with pre-built dashboards for exactly this. Without something like Evidently, a deployed classifier is a black box once it leaves the training notebook — this is the piece that keeps it honest over time.
-
-**Infrastructure health.** **Prometheus + Grafana + Loki** — the standard open source metrics/dashboards/logs trio for the underlying containers/hosts (CPU, memory, GPU utilization, disk, error logs). Every component above exposes Prometheus metrics or logs that funnel here; one set of dashboards for the whole stack, including GPU utilization on the inference box, which matters for capacity planning.
-
-**Guardrails & safety.** **Microsoft Presidio** (MIT) for PII detection/redaction — scan documents and chat inputs/outputs for things like SSNs, account numbers, and names before they're logged or sent to a model, which matters even more when "fully local" is a compliance requirement, not just a preference. **LLM Guard** or **NeMo Guardrails** for input/output filtering — prompt-injection detection, topic restriction, and basic content-safety checks on both what users send in and what the model sends back.
+- **Prometheus + Grafana + Loki** — the standard open source metrics/dashboards/logs trio. Every component above exposes Prometheus metrics or logs that funnel here; one set of dashboards for the whole stack.
+- **Langfuse** (MIT core) for LLM-specific observability — traces every prompt/completion, tracks token usage and latency per user/app, and is invaluable for debugging RAG quality issues ("why did it retrieve the wrong document") and controlling runaway usage.
+- **Microsoft Presidio** (MIT) for PII detection/redaction — scan documents and chat inputs/outputs for things like SSNs, account numbers, and names before they're logged or sent to a model, which matters even more when "fully local" is a compliance requirement, not just a preference.
+- **LLM Guard** or **NeMo Guardrails** for input/output filtering — prompt-injection detection, topic restriction, and basic content-safety checks on both what users send in and what the model sends back.
 
 ### 4.11 Security hardening beyond the app layer
 
@@ -191,35 +186,13 @@ Host-level firewall (`ufw`/`nftables`) restricting inbound traffic to only Traef
 3. A user logs into Open WebUI via Keycloak SSO. Their query goes to LiteLLM, which routes to the RAG pipeline; retrieval is filtered by the user's group membership before results ever reach the model.
 4. The LLM (served by Ollama or vLLM) generates a grounded answer with citations back to source documents. Presidio/LLM Guard scan the exchange; Langfuse logs the full trace for later review.
 
-### Example B: Build-your-own classifier — e.g., "will this customer churn in the next 30 days"
+### Example B: Classification/prediction — e.g., support-ticket triage or churn scoring
 
-This is a fully self-serve workflow for an internal developer/data scientist, start to finish, entirely inside this stack:
-
-1. **Data.** Historical customer data (usage events, support tickets, billing history, plan changes) lives in PostgreSQL — either the org's operational data landing there directly, or synced in from other internal systems via Airflow.
-2. **Labeling & features.** A Dagster/Airflow pipeline builds the training set: for each customer-month in history, compute features (recency/frequency of usage, ticket count, tenure, plan tier, payment failures, etc.) and a label — did that customer churn within the next 30 days, based on what actually happened afterward.
-3. **Training.** The developer trains an XGBoost or scikit-learn model against that feature set — locally or in a scheduled pipeline job — and logs every run to **MLflow** (parameters, precision/recall/AUC, the trained artifact itself). Once a run looks good, they promote it in the MLflow model registry (e.g., `churn-classifier: v7 → Production`).
-4. **Serving as an API.** The production model is wrapped in a small **FastAPI** service that loads the current MLflow-registered model and exposes an endpoint other systems can push data to, for example:
-
-   ```python
-   # churn-scoring-api/main.py
-   from fastapi import FastAPI, Depends
-   import mlflow.pyfunc
-
-   app = FastAPI()
-   model = mlflow.pyfunc.load_model("models:/churn-classifier/Production")
-
-   @app.post("/v1/churn/score")
-   def score(customer: CustomerFeatures, user=Depends(verify_oidc_token)):
-       proba = model.predict_proba([customer.to_row()])[0][1]
-       return {"customer_id": customer.customer_id,
-               "churn_probability_30d": round(float(proba), 4),
-               "model_version": "v7"}
-   ```
-
-   This endpoint sits behind Traefik like every other service, so it inherits TLS and can require a Keycloak-issued OIDC token or a scoped API key (issued via Keycloak client credentials) — the CRM or billing system authenticates the same way a human user would, just without a browser in the loop. "Pushing data" to it is simply: an internal app (CRM, billing system, a nightly batch job) `POST`s one customer's feature row — or a batch of them — and gets a churn probability back in the response, either one at a time for real-time use (e.g., flagging a customer the moment a support agent pulls up their account) or in bulk for a nightly scoring run that writes results back to Postgres.
-5. **Feeding it new data.** If instead the intent is "the model should retrain on newly arrived data," that's the Airflow pipeline from step 2 — it's schedule-driven (e.g., nightly), pulling whatever new rows landed in Postgres since the last run, rather than a live push endpoint. Both patterns — push-to-score (real-time) and scheduled-retrain (batch) — are standard and both are covered here; which one an org needs depends on whether the requirement is "score this record right now" or "keep the model current over time."
-6. **Monitoring it stays good.** Every request to `/v1/churn/score` is logged (Grafana/Prometheus for request volume/latency/errors); **Evidently AI** runs on a schedule comparing recent predictions and incoming feature distributions against the training baseline, flagging drift before precision quietly degrades — so the team finds out from a dashboard, not from a customer complaint.
-7. This pipeline shares the same SSO, secrets, observability, and backup infrastructure as the RAG chatbot — it's not a separate stack, just a different set of containers plugged into the same platform layer.
+1. Historical ticket/customer data lives in PostgreSQL. A Dagster/Airflow pipeline runs feature engineering and trains an XGBoost or scikit-learn model on a schedule (nightly/weekly).
+2. MLflow tracks each training run and promotes the best model to its registry.
+3. The current production model is served behind a small FastAPI endpoint (or MLflow serving).
+4. New tickets/records get scored automatically as they arrive (called from the business app or a lightweight n8n workflow), writing predictions back to Postgres and surfacing them in a Grafana dashboard or directly inside the business tool via API.
+5. This pipeline shares the same SSO, secrets, observability, and backup infrastructure as the RAG chatbot — it's not a separate stack, just a different set of containers plugged into the same platform layer.
 
 ---
 
@@ -252,7 +225,6 @@ This is a fully self-serve workflow for an internal developer/data scientist, st
 | n8n | Workflow automation | Sustainable Use License (source-available, not OSI — verify fit) |
 | scikit-learn / XGBoost / LightGBM | Classical ML | BSD-3-Clause / Apache 2.0 |
 | MLflow | ML experiment tracking/registry | Apache 2.0 |
-| Evidently AI | Production ML model drift/performance monitoring | Apache 2.0 |
 | Airflow | Workflow/pipeline scheduling | Apache 2.0 |
 | Dagster | Pipeline orchestration alternative | Apache 2.0 |
 | FastAPI | Model serving APIs | MIT |
