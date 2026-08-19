@@ -4,7 +4,16 @@ This repository provides a comprehensive architectural blueprint for small to mi
 By leveraging mature open-source technologies under permissive commercial licenses (such as Apache-2.0 and MIT), businesses can host their own foundational models, document search systems, and automated agent pipelines either locally or via highly economical, on-demand compute infrastructure.
 ------------------------------
 ## 🏗️ Architectural Overview
-The stack is designed with a layered approach, ensuring a clean separation of concerns between raw compute orchestration, model serving, internal data vectorization, and user-facing applications. Execution LayerLayer NameAssociated TechnologiesArchitectural Data Flow RoleLevel 1User Interface (UI)Open WebUI / Enterprise ChatCaptures incoming user prompts, manages session history, and displays real-time streaming tokens.Level 2Application & OrchestrationLangChain / LlamaIndex / CrewAIIntercepts queries, manages multi-agent states, and handles system prompt compilation.Level 3Data & Vector StoragePostgreSQL + pgvector / QdrantHosts the corporate knowledge base, storing and indexing semantic text embeddings.Level 4Inference & GatewayLiteLLM / Ollama / vLLMUnifies backend endpoints, handles API routing rules, and runs the core LLM execution engine.Level 5Compute InfrastructureLocal Hardware / Kubernetes / RayOrchestrates the physical hardware nodes, VRAM pools, and baseline container runtimes.
+The stack is designed with a layered approach, ensuring a clean separation of concerns between raw compute orchestration, model serving, internal data vectorization, and user-facing applications.
+
+| Execution Layer | Layer Name | Associated Technologies | Architectural Data Flow Role |
+|---|---|---|---|
+| Level 1 | User Interface (UI) | Open WebUI / Enterprise Chat | Captures incoming user prompts, manages session history, and displays real-time streaming tokens. |
+| Level 2 | Application & Orchestration | LangChain / LlamaIndex / CrewAI | Intercepts queries, manages multi-agent states, and handles system prompt compilation. |
+| Level 3 | Data & Vector Storage | PostgreSQL + pgvector / Qdrant | Hosts the corporate knowledge base, storing and indexing semantic text embeddings. |
+| Level 4 | Inference & Gateway | LiteLLM / Ollama / vLLM | Unifies backend endpoints, handles API routing rules, and runs the core LLM execution engine. |
+| Level 5 | Compute Infrastructure | Local Hardware / Kubernetes / Ray | Orchestrates the physical hardware nodes, VRAM pools, and baseline container runtimes. |
+
 ------------------------------
 ## 📊 Core Tech Stack Components
 
@@ -61,5 +70,6 @@ When deploying self-hosted AI stacks within a business infrastructure, always im
    1. Supply Chain Documentation: Utilize vendor-neutral platforms like MLflow to track your internal experiments, evaluate models systematically, and generate appropriate Software Bills of Materials (SBOMs).
    2. Access Controls: Protect user-facing instances behind secure corporate reverse proxies, requiring OAuth2 or internal corporate directory verification.
    3. Data Residency: Ensure that all processing loops remain entirely contained within local networks or strictly audited private clouds to seamlessly satisfy data privacy regulations.
+
 
 
