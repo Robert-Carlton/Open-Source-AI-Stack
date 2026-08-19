@@ -4,19 +4,20 @@ This repository provides a comprehensive architectural blueprint for small to mi
 By leveraging mature open-source technologies under permissive commercial licenses (such as Apache-2.0 and MIT), businesses can host their own foundational models, document search systems, and automated agent pipelines either locally or via highly economical, on-demand compute infrastructure.
 ------------------------------
 ## 🏗️ Architectural Overview
-The stack is designed with a layered approach, ensuring a clean separation of concerns between raw compute orchestration, model serving, internal data vectorization, and user-facing applications.
-
-graph TD
-    A[1. User Interface Layer<br>Open WebUI] --> B[2. Orchestration Layer<br>LangChain / LlamaIndex / CrewAI]
-    B --> C[3. Data & Vector DB Layer<br>PostgreSQL + pgvector / Qdrant]
-    C --> D[4. Inference & Gateway Layer<br>LiteLLM / Ollama / vLLM]
-    D --> E[5. Infrastructure & Compute Layer<br>Local GPU / Kubernetes / Ray]
-
-    style A fill:#f9f,stroke:#333,stroke-width:1px
-    style B fill:#bbf,stroke:#333,stroke-width:1px
-    style C fill:#fbf,stroke:#333,stroke-width:1px
-    style D fill:#fbb,stroke:#333,stroke-width:1px
-    style E fill:#fff,stroke:#333,stroke-width:1px
+[ Layer 1: User Interface ]
+└── Open WebUI / Enterprise Chat Interface
+                     ↓
+[ Layer 2: Application & Agent Orchestration ]
+└── LangChain / LlamaIndex / CrewAI Pipeline
+                     ↓
+[ Layer 3: Data Retrieval & Vector Database ]
+└── PostgreSQL + pgvector / Qdrant Storage
+                     ↓
+[ Layer 4: LLM Inference Serving & Gateway ]
+└── Ollama / vLLM / LiteLLM Routing Hub
+                     ↓
+[ Layer 5: Infrastructure & Distributed Compute ]
+└── Local GPU Hardware / Kubernetes / Ray Cluster
 
 
 ------------------------------
